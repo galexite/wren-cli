@@ -4,6 +4,7 @@
 # Intermediate files.
 .vs
 /build
+/.cache
 Debug/
 Release
 obj/
