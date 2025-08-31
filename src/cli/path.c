@@ -11,7 +11,8 @@
 // at least two characters, "/", and a single-letter directory name.
 #define MAX_COMPONENTS 2048
 
-typedef struct {
+typedef struct
+{
   const char* start;
   const char* end;
 } Slice;
@@ -23,13 +24,15 @@ static void ensureCapacity(Path* path, size_t capacity)
   // the length. A zero-character path still needs a one-character array to
   // store the '\0'.
   capacity++;
-  
-  if (path->capacity >= capacity) return;
-  
+
+  if (path->capacity >= capacity)
+    return;
+
   // Grow by doubling in size.
   size_t newCapacity = 16;
-  while (newCapacity < capacity) newCapacity *= 2;
-  
+  while (newCapacity < capacity)
+    newCapacity *= 2;
+
   path->chars = (char*)realloc(path->chars, newCapacity);
   path->capacity = newCapacity;
 }
@@ -46,13 +49,15 @@ static void appendSlice(Path* path, Slice slice)
 static bool isSeparator(char c)
 {
   // Slash is a separator on POSIX and Windows.
-  if (c == '/') return true;
-  
+  if (c == '/')
+    return true;
+
   // Backslash is only a separator on Windows.
 #ifdef _WIN32
-  if (c == '\\') return true;
+  if (c == '\\')
+    return true;
 #endif
-  
+
   return false;
 }
 
@@ -79,7 +84,9 @@ static size_t absolutePrefixLength(const char* path)
     {
       // Fully absolute path.
       return 3;
-    } else {
+    }
+    else
+    {
       // "Half-absolute" path like "C:", which is relative to the current
       // working directory on drive. It's absolute for our purposes.
       return 2;
@@ -89,9 +96,10 @@ static size_t absolutePrefixLength(const char* path)
   // TODO: UNC paths.
 
 #endif
-  
+
   // POSIX-style absolute path or absolute path in the current drive on Windows.
-  if (isSeparator(path[0])) return 1;
+  if (isSeparator(path[0]))
+    return 1;
 
   // Not absolute.
   return 0;
@@ -99,7 +107,8 @@ static size_t absolutePrefixLength(const char* path)
 
 PathType pathType(const char* path)
 {
-  if (absolutePrefixLength(path) > 0) return PATH_TYPE_ABSOLUTE;
+  if (absolutePrefixLength(path) > 0)
+    return PATH_TYPE_ABSOLUTE;
 
   // See if it must be relative.
   if ((path[0] == '.' && isSeparator(path[1])) ||
@@ -107,7 +116,7 @@ PathType pathType(const char* path)
   {
     return PATH_TYPE_RELATIVE;
   }
-  
+
   // Otherwise, we don't know.
   return PATH_TYPE_SIMPLE;
 }
@@ -127,7 +136,8 @@ Path* pathNew(const char* string)
 
 void pathFree(Path* path)
 {
-  if (path->chars) free(path->chars);
+  if (path->chars)
+    free(path->chars);
   free(path);
 }
 
@@ -155,8 +165,9 @@ void pathRemoveExtension(Path* path)
   {
     // If we hit a path separator before finding the extension, then the last
     // component doesn't have one.
-    if (isSeparator(path->chars[i])) return;
-    
+    if (isSeparator(path->chars[i]))
+      return;
+
     if (path->chars[i] == '.')
     {
       path->length = i;
@@ -195,7 +206,7 @@ void pathNormalize(Path* path)
   // Split the path into components.
   Slice components[MAX_COMPONENTS];
   int numComponents = 0;
-  
+
   char* start = path->chars;
   char* end = path->chars;
 
@@ -235,23 +246,25 @@ void pathNormalize(Path* path)
                     MAX_COMPONENTS);
             exit(1);
           }
-          
+
           components[numComponents].start = start;
           components[numComponents].end = end;
           numComponents++;
         }
       }
-      
+
       // Skip over separators.
-      while (*end != '\0' && isSeparator(*end)) end++;
-      
+      while (*end != '\0' && isSeparator(*end))
+        end++;
+
       start = end;
-      if (*end == '\0') break;
+      if (*end == '\0')
+        break;
     }
-    
+
     end++;
   }
-  
+
   // Preserve the path type. We don't want to turn, say, "./foo" into "foo"
   // because that changes the semantics of how that path is handled when used
   // as an import string.
@@ -272,7 +285,8 @@ void pathNormalize(Path* path)
     // Add any leading "..".
     for (int i = 0; i < leadingDoubles; i++)
     {
-      if (needsSeparator) pathAppendChar(result, '/');
+      if (needsSeparator)
+        pathAppendChar(result, '/');
       pathAppendString(result, "..");
       needsSeparator = true;
     }
@@ -284,22 +298,24 @@ void pathNormalize(Path* path)
     pathAppendChar(result, '.');
     needsSeparator = true;
   }
-  
+
   for (int i = 0; i < numComponents; i++)
   {
-    if (needsSeparator) pathAppendChar(result, '/');
+    if (needsSeparator)
+      pathAppendChar(result, '/');
     appendSlice(result, components[i]);
     needsSeparator = true;
   }
-  
-  if (result->length == 0) pathAppendChar(result, '.');
-  
+
+  if (result->length == 0)
+    pathAppendChar(result, '.');
+
   // Copy back into the original path.
   free(path->chars);
   path->capacity = result->capacity;
   path->chars = result->chars;
   path->length = result->length;
-  
+
   free(result);
 }
 

@@ -39,51 +39,52 @@ void platformHomePath(WrenVM* vm)
 
   wrenSetSlotString(vm, 0, buffer);
 
-  if (buffer != _buffer) free(buffer);
+  if (buffer != _buffer)
+    free(buffer);
 }
 
 void platformName(WrenVM* vm)
 {
   wrenEnsureSlots(vm, 1);
-  
-  #ifdef _WIN32
-    wrenSetSlotString(vm, 0, "Windows");
-  #elif __APPLE__
-    #if TARGET_IPHONE_SIMULATOR || TARGET_OS_IPHONE
-      wrenSetSlotString(vm, 0, "iOS");
-    #elif TARGET_OS_MAC
-      wrenSetSlotString(vm, 0, "OS X");
-    #else
-      wrenSetSlotString(vm, 0, "Unknown");
-    #endif
-  #elif __linux__
-    wrenSetSlotString(vm, 0, "Linux");
-  #elif __unix__
-    wrenSetSlotString(vm, 0, "Unix");
-  #elif defined(_POSIX_VERSION)
-    wrenSetSlotString(vm, 0, "POSIX");
+
+#ifdef _WIN32
+  wrenSetSlotString(vm, 0, "Windows");
+#elif __APPLE__
+  #if TARGET_IPHONE_SIMULATOR || TARGET_OS_IPHONE
+  wrenSetSlotString(vm, 0, "iOS");
+  #elif TARGET_OS_MAC
+  wrenSetSlotString(vm, 0, "OS X");
   #else
-    wrenSetSlotString(vm, 0, "Unknown");
+  wrenSetSlotString(vm, 0, "Unknown");
   #endif
+#elif __linux__
+  wrenSetSlotString(vm, 0, "Linux");
+#elif __unix__
+  wrenSetSlotString(vm, 0, "Unix");
+#elif defined(_POSIX_VERSION)
+  wrenSetSlotString(vm, 0, "POSIX");
+#else
+  wrenSetSlotString(vm, 0, "Unknown");
+#endif
 }
 
 void platformIsPosix(WrenVM* vm)
 {
   wrenEnsureSlots(vm, 1);
-  
-  #ifdef _WIN32
-    wrenSetSlotBool(vm, 0, false);
-  #elif __APPLE__
-    wrenSetSlotBool(vm, 0, true);
-  #elif __linux__
-    wrenSetSlotBool(vm, 0, true);
-  #elif __unix__
-    wrenSetSlotBool(vm, 0, true);
-  #elif defined(_POSIX_VERSION)
-    wrenSetSlotBool(vm, 0, true);
-  #else
-    wrenSetSlotString(vm, 0, false);
-  #endif
+
+#ifdef _WIN32
+  wrenSetSlotBool(vm, 0, false);
+#elif __APPLE__
+  wrenSetSlotBool(vm, 0, true);
+#elif __linux__
+  wrenSetSlotBool(vm, 0, true);
+#elif __unix__
+  wrenSetSlotBool(vm, 0, true);
+#elif defined(_POSIX_VERSION)
+  wrenSetSlotBool(vm, 0, true);
+#else
+  wrenSetSlotString(vm, 0, false);
+#endif
 }
 
 void processAllArguments(WrenVM* vm)
@@ -114,17 +115,20 @@ void processCwd(WrenVM* vm)
   wrenSetSlotString(vm, 0, buffer);
 }
 
-void processPid(WrenVM* vm) {
+void processPid(WrenVM* vm)
+{
   wrenEnsureSlots(vm, 1);
   wrenSetSlotDouble(vm, 0, uv_os_getpid());
 }
 
-void processPpid(WrenVM* vm) {
+void processPpid(WrenVM* vm)
+{
   wrenEnsureSlots(vm, 1);
   wrenSetSlotDouble(vm, 0, uv_os_getppid());
 }
 
-void processVersion(WrenVM* vm) {
+void processVersion(WrenVM* vm)
+{
   wrenEnsureSlots(vm, 1);
   wrenSetSlotString(vm, 0, WREN_VERSION_STRING);
 }

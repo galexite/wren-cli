@@ -96,7 +96,7 @@ typedef struct
   // Pointer to the string containing the source code of the module. We use a
   // pointer here because the string variable itself is not a constant
   // expression so can't be used in the initializer below.
-  const char **source;
+  const char** source;
 
   ClassRegistry classes[MAX_CLASSES_PER_MODULE];
 } ModuleRegistry;
@@ -104,99 +104,130 @@ typedef struct
 // To locate foreign classes and modules, we build a big directory for them in
 // static data. The nested collection initializer syntax gets pretty noisy, so
 // define a couple of macros to make it easier.
-#define SENTINEL_METHOD { false, NULL, NULL }
-#define SENTINEL_CLASS { NULL, { SENTINEL_METHOD } }
-#define SENTINEL_MODULE {NULL, NULL, { SENTINEL_CLASS } }
+#define SENTINEL_METHOD {false, NULL, NULL}
+#define SENTINEL_CLASS                                                         \
+  {                                                                            \
+    NULL,                                                                      \
+    {                                                                          \
+      SENTINEL_METHOD                                                          \
+    }                                                                          \
+  }
+#define SENTINEL_MODULE                                                        \
+  {                                                                            \
+    NULL, NULL,                                                                \
+    {                                                                          \
+      SENTINEL_CLASS                                                           \
+    }                                                                          \
+  }
 
-#define MODULE(name) { #name, &name##ModuleSource, {
-#define END_MODULE SENTINEL_CLASS } },
+#define MODULE(name)                                                           \
+  {                                                                            \
+    #name, &name##ModuleSource,                                                \
+    {
+#define END_MODULE                                                             \
+  SENTINEL_CLASS                                                               \
+  }                                                                            \
+  }                                                                            \
+  ,
 
-#define CLASS(name) { #name, {
-#define END_CLASS SENTINEL_METHOD } },
+#define CLASS(name)                                                            \
+  {                                                                            \
+    #name,                                                                     \
+    {
+#define END_CLASS                                                              \
+  SENTINEL_METHOD                                                              \
+  }                                                                            \
+  }                                                                            \
+  ,
 
-#define METHOD(signature, fn) { false, signature, fn },
-#define STATIC_METHOD(signature, fn) { true, signature, fn },
-#define ALLOCATE(fn) { true, "<allocate>", (WrenForeignMethodFn)fn },
-#define FINALIZE(fn) { true, "<finalize>", (WrenForeignMethodFn)fn },
+#define METHOD(signature, fn) {false, signature, fn},
+#define STATIC_METHOD(signature, fn) {true, signature, fn},
+#define ALLOCATE(fn) {true, "<allocate>", (WrenForeignMethodFn)fn},
+#define FINALIZE(fn) {true, "<finalize>", (WrenForeignMethodFn)fn},
 
 // The array of built-in modules.
-static ModuleRegistry modules[] =
-{
-  MODULE(io)
-    CLASS(Directory)
-      STATIC_METHOD("create_(_,_)", directoryCreate)
-      STATIC_METHOD("delete_(_,_)", directoryDelete)
-      STATIC_METHOD("list_(_,_)", directoryList)
-    END_CLASS
-    CLASS(File)
-      ALLOCATE(fileAllocate)
-      FINALIZE(fileFinalize)
-      STATIC_METHOD("delete_(_,_)", fileDelete)
-      STATIC_METHOD("open_(_,_,_)", fileOpen)
-      STATIC_METHOD("realPath_(_,_)", fileRealPath)
-      STATIC_METHOD("sizePath_(_,_)", fileSizePath)
-      METHOD("close_(_)", fileClose)
-      METHOD("descriptor", fileDescriptor)
-      METHOD("readBytes_(_,_,_)", fileReadBytes)
-      METHOD("size_(_)", fileSize)
-      METHOD("stat_(_)", fileStat)
-      METHOD("writeBytes_(_,_,_)", fileWriteBytes)
-    END_CLASS
-    CLASS(Stat)
-      STATIC_METHOD("path_(_,_)", statPath)
-      METHOD("blockCount", statBlockCount)
-      METHOD("blockSize", statBlockSize)
-      METHOD("device", statDevice)
-      METHOD("group", statGroup)
-      METHOD("inode", statInode)
-      METHOD("linkCount", statLinkCount)
-      METHOD("mode", statMode)
-      METHOD("size", statSize)
-      METHOD("specialDevice", statSpecialDevice)
-      METHOD("user", statUser)
-      METHOD("isDirectory", statIsDirectory)
-      METHOD("isFile", statIsFile)
-    END_CLASS
-    CLASS(Stdin)
-      STATIC_METHOD("isRaw", stdinIsRaw)
-      STATIC_METHOD("isRaw=(_)", stdinIsRawSet)
-      STATIC_METHOD("isTerminal", stdinIsTerminal)
-      STATIC_METHOD("readStart_()", stdinReadStart)
-      STATIC_METHOD("readStop_()", stdinReadStop)
-    END_CLASS
-    CLASS(Stdout)
-      STATIC_METHOD("flush()", stdoutFlush)
-    END_CLASS
-  END_MODULE
-  MODULE(os)
-    CLASS(Platform)
-      STATIC_METHOD("homePath", platformHomePath)
-      STATIC_METHOD("isPosix", platformIsPosix)
-      STATIC_METHOD("name", platformName)
-    END_CLASS
-    CLASS(Process)
-      STATIC_METHOD("allArguments", processAllArguments)
-      STATIC_METHOD("cwd", processCwd)
-      STATIC_METHOD("pid", processPid)
-      STATIC_METHOD("ppid", processPpid)
-      STATIC_METHOD("version", processVersion)
-    END_CLASS
-  END_MODULE
-  MODULE(repl)
-  END_MODULE
-  MODULE(scheduler)
-    CLASS(Scheduler)
-      STATIC_METHOD("captureMethods_()", schedulerCaptureMethods)
-    END_CLASS
-  END_MODULE
-  MODULE(timer)
-    CLASS(Timer)
-      STATIC_METHOD("startTimer_(_,_)", timerStartTimer)
-    END_CLASS
-  END_MODULE
+static ModuleRegistry modules[] = {
+    MODULE(io) CLASS(Directory) STATIC_METHOD(
+        "create_(_,_)", directoryCreate) STATIC_METHOD("delete_(_,_)",
+                                                       directoryDelete)
+        STATIC_METHOD("list_(_,_)", directoryList) END_CLASS CLASS(
+            File) ALLOCATE(fileAllocate) FINALIZE(fileFinalize)
+            STATIC_METHOD("delete_(_,_)", fileDelete) STATIC_METHOD(
+                "open_(_,_,_)", fileOpen) STATIC_METHOD("realPath_(_,_)",
+                                                        fileRealPath)
+                STATIC_METHOD("sizePath_(_,_)", fileSizePath) METHOD(
+                    "close_(_)", fileClose) METHOD("descriptor", fileDescriptor)
+                    METHOD("readBytes_(_,_,_)", fileReadBytes) METHOD(
+                        "size_(_)",
+                        fileSize) METHOD("stat_(_)",
+                                         fileStat) METHOD("writeBytes_(_,_,_)",
+                                                          fileWriteBytes)
+                        END_CLASS CLASS(Stat) STATIC_METHOD(
+                            "path_(_,_)", statPath) METHOD("blockCount",
+                                                           statBlockCount)
+                            METHOD("blockSize", statBlockSize) METHOD(
+                                "device", statDevice) METHOD("group", statGroup)
+                                METHOD("inode", statInode) METHOD(
+                                    "linkCount", statLinkCount) METHOD("mode",
+                                                                       statMode)
+                                    METHOD("size", statSize) METHOD(
+                                        "specialDevice",
+                                        statSpecialDevice) METHOD("user",
+                                                                  statUser)
+                                        METHOD("isDirectory", statIsDirectory) METHOD(
+                                            "isFile",
+                                            statIsFile) END_CLASS CLASS(Stdin)
+                                            STATIC_METHOD("isRaw", stdinIsRaw) STATIC_METHOD(
+                                                "isRaw=(_)",
+                                                stdinIsRawSet) STATIC_METHOD("i"
+                                                                             "s"
+                                                                             "T"
+                                                                             "e"
+                                                                             "r"
+                                                                             "m"
+                                                                             "i"
+                                                                             "n"
+                                                                             "a"
+                                                                             "l",
+                                                                             stdinIsTerminal)
+                                                STATIC_METHOD(
+                                                    "readStart_()",
+                                                    stdinReadStart) STATIC_METHOD("readStop_()", stdinReadStop) END_CLASS
+                                                    CLASS(Stdout) STATIC_METHOD(
+                                                        "flush()",
+                                                        stdoutFlush) END_CLASS END_MODULE
+                                                        MODULE(os) CLASS(Platform) STATIC_METHOD(
+                                                            "homePath",
+                                                            platformHomePath) STATIC_METHOD("isPosix", platformIsPosix)
+                                                            STATIC_METHOD(
+                                                                "name",
+                                                                platformName) END_CLASS
+                                                                CLASS(Process) STATIC_METHOD(
+                                                                    "allArgumen"
+                                                                    "ts",
+                                                                    processAllArguments)
+                                                                    STATIC_METHOD("cwd", processCwd) STATIC_METHOD(
+                                                                        "pid",
+                                                                        processPid)
+                                                                        STATIC_METHOD("ppid", processPpid) STATIC_METHOD(
+                                                                            "ve"
+                                                                            "rs"
+                                                                            "io"
+                                                                            "n",
+                                                                            processVersion) END_CLASS
+                                                                            END_MODULE MODULE(
+                                                                                repl) END_MODULE MODULE(scheduler)
+                                                                                CLASS(Scheduler) STATIC_METHOD(
+                                                                                    "captureMethods_()",
+                                                                                    schedulerCaptureMethods) END_CLASS
+                                                                                    END_MODULE MODULE(
+                                                                                        timer)
+                                                                                        CLASS(Timer) STATIC_METHOD(
+                                                                                            "startTimer_(_,_)",
+                                                                                            timerStartTimer)
+                                                                                            END_CLASS END_MODULE
 
-  SENTINEL_MODULE
-};
+                                                                                                SENTINEL_MODULE};
 
 #undef SENTINEL_METHOD
 #undef SENTINEL_CLASS
@@ -216,7 +247,8 @@ static ModuleRegistry* findModule(const char* name)
 {
   for (int i = 0; modules[i].name != NULL; i++)
   {
-    if (strcmp(name, modules[i].name) == 0) return &modules[i];
+    if (strcmp(name, modules[i].name) == 0)
+      return &modules[i];
   }
 
   return NULL;
@@ -227,15 +259,16 @@ static ClassRegistry* findClass(ModuleRegistry* module, const char* name)
 {
   for (int i = 0; module->classes[i].name != NULL; i++)
   {
-    if (strcmp(name, module->classes[i].name) == 0) return &module->classes[i];
+    if (strcmp(name, module->classes[i].name) == 0)
+      return &module->classes[i];
   }
 
   return NULL;
 }
 
 // Looks for a method with [signature] in [clas].
-static WrenForeignMethodFn findMethod(ClassRegistry* clas,
-                                      bool isStatic, const char* signature)
+static WrenForeignMethodFn findMethod(ClassRegistry* clas, bool isStatic,
+                                      const char* signature)
 {
   for (int i = 0; clas->methods[i].signature != NULL; i++)
   {
@@ -250,9 +283,11 @@ static WrenForeignMethodFn findMethod(ClassRegistry* clas,
   return NULL;
 }
 
-void loadModuleComplete(WrenVM* vm, const char* name, struct WrenLoadModuleResult result)
+void loadModuleComplete(WrenVM* vm, const char* name,
+                        struct WrenLoadModuleResult result)
 {
-  if (result.source == NULL) return;
+  if (result.source == NULL)
+    return;
 
   free((void*)result.source);
 }
@@ -261,41 +296,48 @@ WrenLoadModuleResult loadBuiltInModule(const char* name)
 {
   WrenLoadModuleResult result = {0};
   ModuleRegistry* module = findModule(name);
-  if (module == NULL) return result;
+  if (module == NULL)
+    return result;
 
   size_t length = strlen(*module->source);
   char* copy = (char*)malloc(length + 1);
   memcpy(copy, *module->source, length + 1);
-   
+
   result.onComplete = loadModuleComplete;
   result.source = copy;
   return result;
 }
 
-WrenForeignMethodFn bindBuiltInForeignMethod(
-    WrenVM* vm, const char* moduleName, const char* className, bool isStatic,
-    const char* signature)
+WrenForeignMethodFn bindBuiltInForeignMethod(WrenVM* vm, const char* moduleName,
+                                             const char* className,
+                                             bool isStatic,
+                                             const char* signature)
 {
   // TODO: Assert instead of return NULL?
   ModuleRegistry* module = findModule(moduleName);
-  if (module == NULL) return NULL;
+  if (module == NULL)
+    return NULL;
 
   ClassRegistry* clas = findClass(module, className);
-  if (clas == NULL) return NULL;
+  if (clas == NULL)
+    return NULL;
 
   return findMethod(clas, isStatic, signature);
 }
 
-WrenForeignClassMethods bindBuiltInForeignClass(
-    WrenVM* vm, const char* moduleName, const char* className)
+WrenForeignClassMethods bindBuiltInForeignClass(WrenVM* vm,
+                                                const char* moduleName,
+                                                const char* className)
 {
-  WrenForeignClassMethods methods = { NULL, NULL };
+  WrenForeignClassMethods methods = {NULL, NULL};
 
   ModuleRegistry* module = findModule(moduleName);
-  if (module == NULL) return methods;
+  if (module == NULL)
+    return methods;
 
   ClassRegistry* clas = findClass(module, className);
-  if (clas == NULL) return methods;
+  if (clas == NULL)
+    return methods;
 
   methods.allocate = findMethod(clas, true, "<allocate>");
   methods.finalize = (WrenFinalizerFn)findMethod(clas, true, "<finalize>");

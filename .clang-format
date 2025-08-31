@@ -1,0 +1,6 @@
+---
+BasedOnStyle: LLVM
+BreakBeforeBraces: Allman
+IndentPPDirectives: BeforeHash
+AllowShortFunctionsOnASingleLine: None
+PointerAlignment: Left

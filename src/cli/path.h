@@ -22,10 +22,10 @@ typedef enum
   // An absolute path, starting with "/" on POSIX systems, a drive letter on
   // Windows, etc.
   PATH_TYPE_ABSOLUTE,
-  
+
   // An explicitly relative path, starting with "./" or "../".
   PATH_TYPE_RELATIVE,
-  
+
   // A path that has no leading prefix, like "foo/bar".
   PATH_TYPE_SIMPLE,
 } PathType;

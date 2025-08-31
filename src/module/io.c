@@ -8,8 +8,8 @@
 #include "vm.h"
 #include "wren.h"
 
-#include <stdio.h>
 #include <fcntl.h>
+#include <stdio.h>
 
 typedef struct sFileRequestData
 {
@@ -44,13 +44,13 @@ static void shutdownStdin()
     free(stdinStream);
     stdinStream = NULL;
   }
-  
+
   if (stdinClass != NULL)
   {
     wrenReleaseHandle(getVM(), stdinClass);
     stdinClass = NULL;
   }
-  
+
   if (stdinOnData != NULL)
   {
     wrenReleaseHandle(getVM(), stdinOnData);
@@ -61,7 +61,7 @@ static void shutdownStdin()
 void ioShutdown()
 {
   shutdownStdin();
-  
+
   if (statClass != NULL)
   {
     wrenReleaseHandle(getVM(), statClass);
@@ -75,16 +75,17 @@ void ioShutdown()
 // Returns true if an error was reported.
 static bool handleRequestError(uv_fs_t* request)
 {
-  if (request->result >= 0) return false;
+  if (request->result >= 0)
+    return false;
 
   FileRequestData* data = (FileRequestData*)request->data;
   WrenHandle* fiber = (WrenHandle*)data->fiber;
-  
+
   int error = (int)request->result;
   free(data);
   uv_fs_req_cleanup(request);
   free(request);
-  
+
   schedulerResumeError(fiber, uv_strerror(error));
   return true;
 }
@@ -93,10 +94,10 @@ static bool handleRequestError(uv_fs_t* request)
 uv_fs_t* createRequest(WrenHandle* fiber)
 {
   uv_fs_t* request = (uv_fs_t*)malloc(sizeof(uv_fs_t));
-  
+
   FileRequestData* data = (FileRequestData*)malloc(sizeof(FileRequestData));
   data->fiber = fiber;
-  
+
   request->data = data;
   return request;
 }
@@ -108,30 +109,31 @@ WrenHandle* freeRequest(uv_fs_t* request)
 {
   FileRequestData* data = (FileRequestData*)request->data;
   WrenHandle* fiber = data->fiber;
-  
+
   free(data);
   uv_fs_req_cleanup(request);
   free(request);
-  
+
   return fiber;
 }
 
 static void directoryListCallback(uv_fs_t* request)
 {
-  if (handleRequestError(request)) return;
+  if (handleRequestError(request))
+    return;
 
   uv_dirent_t entry;
 
   WrenVM* vm = getVM();
   wrenEnsureSlots(vm, 3);
   wrenSetSlotNewList(vm, 2);
-  
+
   while (uv_fs_scandir_next(request, &entry) != UV_EOF)
   {
     wrenSetSlotString(vm, 1, entry.name);
     wrenInsertInList(vm, 2, -1, 1);
   }
-  
+
   schedulerResume(freeRequest(request), true);
   schedulerFinishResume();
 }
@@ -141,13 +143,16 @@ void directoryList(WrenVM* vm)
   const char* path = wrenGetSlotString(vm, 1);
   WrenHandle* fiber = wrenGetSlotHandle(vm, 2);
   uv_fs_t* request = createRequest(fiber);
-  
+
   int error = uv_fs_scandir(getLoop(), request, path, 0, directoryListCallback);
-  if (error != 0 ) schedulerResumeError(fiber, uv_strerror(error));
+  if (error != 0)
+    schedulerResumeError(fiber, uv_strerror(error));
 }
 
-void fileDirectoryCallback(uv_fs_t* request) {
-  if (handleRequestError(request)) return;
+void fileDirectoryCallback(uv_fs_t* request)
+{
+  if (handleRequestError(request))
+    return;
 
   schedulerResume(freeRequest(request), false);
 }
@@ -177,10 +182,11 @@ void fileAllocate(WrenVM* vm)
 void fileFinalize(void* data)
 {
   int fd = *(int*)data;
-  
+
   // Already closed.
-  if (fd == -1) return;
-  
+  if (fd == -1)
+    return;
+
   uv_fs_t request;
   uv_fs_close(getLoop(), &request, fd, NULL);
   uv_fs_req_cleanup(&request);
@@ -188,7 +194,8 @@ void fileFinalize(void* data)
 
 static void fileDeleteCallback(uv_fs_t* request)
 {
-  if (handleRequestError(request)) return;
+  if (handleRequestError(request))
+    return;
   schedulerResume(freeRequest(request), false);
 }
 
@@ -197,15 +204,17 @@ void fileDelete(WrenVM* vm)
   const char* path = wrenGetSlotString(vm, 1);
   WrenHandle* fiber = wrenGetSlotHandle(vm, 2);
   uv_fs_t* request = createRequest(fiber);
-  
+
   int error = uv_fs_unlink(getLoop(), request, path, fileDeleteCallback);
-  if (error != 0 ) schedulerResumeError(fiber, uv_strerror(error));
+  if (error != 0)
+    schedulerResumeError(fiber, uv_strerror(error));
 }
 
 static void fileOpenCallback(uv_fs_t* request)
 {
-  if (handleRequestError(request)) return;
-  
+  if (handleRequestError(request))
+    return;
+
   double fd = (double)request->result;
   schedulerResume(freeRequest(request), true);
   wrenSetSlotDouble(getVM(), 2, fd);
@@ -217,16 +226,23 @@ static void fileOpenCallback(uv_fs_t* request)
 static int mapFileFlags(int flags)
 {
   int result = 0;
-  
+
   // Note: These must be kept in sync with FileFlags in io.wren.
-  if (flags & 0x01) result |= O_RDONLY;
-  if (flags & 0x02) result |= O_WRONLY;
-  if (flags & 0x04) result |= O_RDWR;
-  if (flags & 0x08) result |= O_SYNC;
-  if (flags & 0x10) result |= O_CREAT;
-  if (flags & 0x20) result |= O_TRUNC;
-  if (flags & 0x40) result |= O_EXCL;
-  
+  if (flags & 0x01)
+    result |= O_RDONLY;
+  if (flags & 0x02)
+    result |= O_WRONLY;
+  if (flags & 0x04)
+    result |= O_RDWR;
+  if (flags & 0x08)
+    result |= O_SYNC;
+  if (flags & 0x10)
+    result |= O_CREAT;
+  if (flags & 0x20)
+    result |= O_TRUNC;
+  if (flags & 0x40)
+    result |= O_EXCL;
+
   return result;
 }
 
@@ -244,7 +260,8 @@ void fileOpen(WrenVM* vm)
 // Called by libuv when the stat call for size completes.
 static void fileSizeCallback(uv_fs_t* request)
 {
-  if (handleRequestError(request)) return;
+  if (handleRequestError(request))
+    return;
 
   double size = (double)request->statbuf.st_size;
   schedulerResume(freeRequest(request), true);
@@ -261,7 +278,8 @@ void fileSizePath(WrenVM* vm)
 
 static void fileCloseCallback(uv_fs_t* request)
 {
-  if (handleRequestError(request)) return;
+  if (handleRequestError(request))
+    return;
 
   schedulerResume(freeRequest(request), false);
 }
@@ -295,7 +313,8 @@ void fileDescriptor(WrenVM* vm)
 
 static void fileReadBytesCallback(uv_fs_t* request)
 {
-  if (handleRequestError(request)) return;
+  if (handleRequestError(request))
+    return;
 
   FileRequestData* data = (FileRequestData*)request->data;
   uv_buf_t buffer = data->buffer;
@@ -332,8 +351,9 @@ void fileReadBytes(WrenVM* vm)
 
 static void realPathCallback(uv_fs_t* request)
 {
-  if (handleRequestError(request)) return;
-  
+  if (handleRequestError(request))
+    return;
+
   wrenEnsureSlots(getVM(), 3);
   wrenSetSlotString(getVM(), 2, (char*)request->ptr);
   schedulerResume(freeRequest(request), true);
@@ -350,11 +370,12 @@ void fileRealPath(WrenVM* vm)
 // Called by libuv when the stat call completes.
 static void statCallback(uv_fs_t* request)
 {
-  if (handleRequestError(request)) return;
-  
+  if (handleRequestError(request))
+    return;
+
   WrenVM* vm = getVM();
   wrenEnsureSlots(vm, 3);
-  
+
   // Get a handle to the Stat class. We'll hang on to this so we don't have to
   // look it up by name every time.
   if (statClass == NULL)
@@ -362,15 +383,15 @@ static void statCallback(uv_fs_t* request)
     wrenGetVariable(vm, "io", "Stat", 0);
     statClass = wrenGetSlotHandle(vm, 0);
   }
-  
+
   // Create a foreign Stat object to store the stat struct.
   wrenSetSlotHandle(vm, 2, statClass);
   wrenSetSlotNewForeign(vm, 2, 2, sizeof(uv_stat_t));
-  
+
   // Copy the stat data.
   uv_stat_t* data = (uv_stat_t*)wrenGetSlotForeign(vm, 2);
   *data = request->statbuf;
-  
+
   schedulerResume(freeRequest(request), true);
   schedulerFinishResume();
 }
@@ -391,8 +412,9 @@ void fileSize(WrenVM* vm)
 
 static void fileWriteBytesCallback(uv_fs_t* request)
 {
-  if (handleRequestError(request)) return;
- 
+  if (handleRequestError(request))
+    return;
+
   FileRequestData* data = (FileRequestData*)request->data;
   free(data->buffer.base);
 
@@ -406,7 +428,7 @@ void fileWriteBytes(WrenVM* vm)
   const char* bytes = wrenGetSlotBytes(vm, 1, &length);
   size_t offset = (size_t)wrenGetSlotDouble(vm, 2);
   uv_fs_t* request = createRequest(wrenGetSlotHandle(vm, 3));
-  
+
   FileRequestData* data = (FileRequestData*)request->data;
 
   data->buffer.len = length;
@@ -509,7 +531,7 @@ static void initStdin()
       // stdin is connected to a terminal.
       uv_tty_t* handle = (uv_tty_t*)malloc(sizeof(uv_tty_t));
       uv_tty_init(getLoop(), handle, stdinDescriptor, true);
-      
+
       stdinStream = (uv_stream_t*)handle;
     }
     else
@@ -531,9 +553,9 @@ void stdinIsRaw(WrenVM* vm)
 void stdinIsRawSet(WrenVM* vm)
 {
   initStdin();
-  
+
   isStdinRaw = wrenGetSlotBool(vm, 1);
-  
+
   if (uv_guess_handle(stdinDescriptor) == UV_TTY)
   {
     uv_tty_t* handle = (uv_tty_t*)stdinStream;
@@ -570,19 +592,19 @@ static void stdinReadCallback(uv_stream_t* stream, ssize_t numRead,
                               const uv_buf_t* buffer)
 {
   WrenVM* vm = getVM();
-  
+
   if (stdinClass == NULL)
   {
     wrenEnsureSlots(vm, 1);
     wrenGetVariable(vm, "io", "Stdin", 0);
     stdinClass = wrenGetSlotHandle(vm, 0);
   }
-  
+
   if (stdinOnData == NULL)
   {
     stdinOnData = wrenMakeCallHandle(vm, "onData_(_)");
   }
-  
+
   // If stdin was closed, send null to let io.wren know.
   if (numRead == UV_EOF)
   {
@@ -590,7 +612,7 @@ static void stdinReadCallback(uv_stream_t* stream, ssize_t numRead,
     wrenSetSlotHandle(vm, 0, stdinClass);
     wrenSetSlotNull(vm, 1);
     wrenCall(vm, stdinOnData);
-    
+
     shutdownStdin();
     return;
   }
